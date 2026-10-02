@@ -1,5 +1,6 @@
 using API.Extensions;
-//using Application.Services;
+using Application.Interfaces;
+using Application.Services;
 using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
@@ -17,6 +18,9 @@ builder.Services.AddAuthorization();
 
 //Add services
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 
 builder.Services.AddControllers();
 
