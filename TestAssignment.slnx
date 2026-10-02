@@ -1,0 +1,14 @@
+<Solution>
+  <Project Path="API/API.csproj">
+    <BuildDependency Project="Application/Application.csproj" />
+    <BuildDependency Project="Infrastructure/Infrastructure.csproj" />
+  </Project>
+  <Project Path="Application/Application.csproj">
+    <BuildDependency Project="Domain/Domain.csproj" />
+  </Project>
+  <Project Path="Domain/Domain.csproj" />
+  <Project Path="Infrastructure/Infrastructure.csproj">
+    <BuildDependency Project="Application/Application.csproj" />
+    <BuildDependency Project="Domain/Domain.csproj" />
+  </Project>
+</Solution>

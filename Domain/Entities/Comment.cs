@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.DTO.Requests.Auth
+namespace Domain.Entities
 {
-    public class AuthTokensRequest
+    public class Comment
     {
 
     }
