@@ -1,0 +1,75 @@
+services:
+  - type: web
+    name: dotnet-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./API/Dockerfile
+    autoDeploy: true
+
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+      - key: ASPNETCORE_URLS
+        value: http://+:8080
+
+      - key: ASPNETCORE_HTTP_PORTS
+        value: 8080
+
+      # PostgreSQL
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: postgres
+          property: host
+
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: postgres
+          property: port
+
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: postgres
+          property: user
+
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: postgres
+          property: password
+
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: postgres
+          property: database
+
+      # Redis
+      - key: REDIS_HOST
+        fromService:
+          name: redis
+          type: redis
+          property: host
+
+      - key: REDIS_PORT
+        fromService:
+          name: redis
+          type: redis
+          property: port
+
+      # Mailgun
+      - key: MAILGUN_API_KEY
+        value: 3daf614b7b8dd585fb9c90f16403714a-82cf32bf-9b406a66
+
+      # JWT
+      - key: Jwt__SecretKey
+        value: d5524aee-67c9-4715-8a02-5cc6707f6368
+  - type: redis
+    name: redis
+    plan: free
+    ipAllowList:
+      - source:
+
+databases:
+  - name: postgres
+    databaseName: database
+    user: user
+    plan: free
