@@ -1,7 +1,9 @@
 using API.Extensions;
 using Application.Interfaces;
+using Application.Options;
 using Application.Services;
 using Infrastructure.Persistence.Context;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
@@ -18,10 +20,25 @@ builder.Services.AddAuthorization();
 
 //Add services
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddMemoryCache();
+
+builder.Services.AddOptions<CaptchaOptions>()
+    .Bind(builder.Configuration.GetSection(CaptchaOptions.SectionName))
+    .Validate(o => o.CodeLength is >= 3 and <= 10, "Captcha:CodeLength must be 3-10")
+    .Validate(o => o.TtlMinutes > 0, "Captcha:TtlMinutes must be positive")
+    .Validate(o => o.Width > 0 && o.Height > 0, "Captcha size must be positive")
+    .ValidateOnStart();
+
+builder.Services.AddRateLimiter(o => o.AddFixedWindowLimiter("captcha", w =>
+{
+    w.PermitLimit = 20;
+    w.Window = TimeSpan.FromMinutes(1);
+}));
 
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
 builder.Services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
+builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
 builder.Services.AddControllers();
 
@@ -46,23 +63,8 @@ app.UseStatusCodePages();
 // Apply pending migrations and seed the database
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-
-    try
-    {
-        var dbContext = services.GetRequiredService<ApplicationDbContext>();
-        if (dbContext.Database.GetPendingMigrations().Any())
-        {
-            Console.WriteLine("Applying pending migrations...");
-            await dbContext.Database.MigrateAsync();
-            Console.WriteLine("Migrations applied successfully.");
-        }
-    }
-    catch(Exception ex)
-    {
-        
-        throw new Exception($"Error during migration: {ex.Message} | {ex.InnerException}");
-    }
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
 }
 
 // Configure the HTTP request pipeline.
@@ -74,10 +76,6 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
 
 app.MapControllers();
 
