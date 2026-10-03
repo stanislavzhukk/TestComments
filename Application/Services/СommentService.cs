@@ -47,6 +47,7 @@ namespace Application.Services
                 HomePageUrl = request.HomePageUrl,
                 Content = html,
                 ParentId = request.ParentCommentId,
+                RootId = rootId,
                 //AuthorIp = client.Ip,
                 //AuthorUserAgent = client.UserAgent,
                 CreatedAt = DateTime.UtcNow
@@ -68,7 +69,7 @@ namespace Application.Services
                 {
                     //files.Delete(attachment.StoredFileName);
                 }
-                throw;                                         
+                throw;
             }
 
             return Result.Success(new CommentResponse(
@@ -77,15 +78,23 @@ namespace Application.Services
                 comment.UserEmail,
                 comment.HomePageUrl,
                 comment.Content,
-                comment.ParentId
+                comment.ParentId,
+                comment.CreatedAt
             ));
         }
 
-        public async Task<Result<PagedResult<CommentResponse>>> GetCommentsAsync(int page, int pageSize, CancellationToken ct = default)
+        public async Task<Result<PagedResult<CommentResponse>>> GetCommentsAsync(GetPagedCommentsRequest request, CancellationToken ct = default)
         {
-            var comments = await appDbContext.Comments.AsNoTracking()
-                .OrderByDescending(c => c.CreatedAt)
-                .Skip((page - 1) * pageSize)
+            var pageSize = Math.Clamp(request.PageSize, 1, 25);
+            var pageNumber = Math.Max(request.PageNumber, 1);
+            var totalCount = await appDbContext.Comments.CountAsync(cancellationToken: ct);
+            var rootCommentsQuery = appDbContext.Comments.AsNoTracking()
+                .Where(c => c.ParentId == null);
+
+            rootCommentsQuery = ApplySorting(rootCommentsQuery, request.SortBy, request.Desc);
+
+            var rootComments = await rootCommentsQuery
+                .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .Select(c => new CommentResponse(
                     c.Id,
@@ -93,10 +102,15 @@ namespace Application.Services
                     c.UserEmail,
                     c.HomePageUrl,
                     c.Content,
-                    c.ParentId
-                ))
-                .ToListAsync();
-            return Result.Success(new PagedResult<CommentResponse>(comments, comments.Count, page, pageSize));
+                    c.ParentId,
+                    c.CreatedAt
+                )).ToListAsync(cancellationToken: ct);
+
+            var rootIds = rootComments.Select(r => r.Id).ToList();
+
+            await AttachRepliesAsync(rootComments, ct);
+
+            return Result.Success(new PagedResult<CommentResponse>(rootComments, totalCount, pageNumber, pageSize));
         }
 
         public async Task<Result<CommentResponse>> GetCommentAsync(Guid id, CancellationToken ct = default)
@@ -109,7 +123,8 @@ namespace Application.Services
                     c.UserEmail,
                     c.HomePageUrl,
                     c.Content,
-                    c.ParentId
+                    c.ParentId,
+                    c.CreatedAt
                 ))
                 .FirstOrDefaultAsync(ct);
             if (comment is null)
@@ -117,6 +132,49 @@ namespace Application.Services
                 return Result.Failure<CommentResponse>(Error.NotFound("Comment.NotFound", "Comment not found"));
             }
             return Result.Success(comment);
+        }
+
+        private async Task AttachRepliesAsync(List<CommentResponse> roots, CancellationToken ct)
+        {
+            if (roots.Count == 0)
+            {
+                return;
+            }
+
+            var rootIds = roots.Select(r => r.Id).ToList();
+
+            var replies = await appDbContext.Comments.AsNoTracking()
+                .Where(c => c.RootId != null && rootIds.Contains(c.RootId.Value))
+                .OrderBy(c => c.CreatedAt).ThenBy(c => c.Id)
+                .Select(c => new CommentResponse(
+                    c.Id, 
+                    c.UserName, 
+                    c.UserEmail, 
+                    c.HomePageUrl,
+                    c.Content, 
+                    c.ParentId, 
+                    c.CreatedAt))
+                .ToListAsync(ct);
+
+            Dictionary<Guid, CommentResponse> commentsById = roots.Concat(replies).ToDictionary(x => x.Id);
+
+            foreach (var reply in replies)
+            {
+                commentsById[reply.ParentId!.Value].Replies.Add(reply);
+            }
+        }
+
+        private static IQueryable<Comment> ApplySorting(IQueryable<Comment> query, string? sortBy, bool desc)
+        {
+            return (sortBy, desc) switch
+            {
+                ("userName", true) => query.OrderByDescending(c => c.UserName).ThenByDescending(c => c.Id),
+                ("userName", false) => query.OrderBy(c => c.UserName).ThenBy(c => c.Id),
+                ("userEmail", true) => query.OrderByDescending(c => c.UserEmail).ThenByDescending(c => c.Id),
+                ("userEmail", false) => query.OrderBy(c => c.UserEmail).ThenBy(c => c.Id),
+                ("createdAt", false) => query.OrderBy(c => c.CreatedAt).ThenBy(c => c.Id),
+                _ => query.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id)
+            };
         }
     }
 }

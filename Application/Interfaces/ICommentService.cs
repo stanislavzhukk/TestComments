@@ -6,7 +6,7 @@ namespace Application.Interfaces
 {
     public interface ICommentService
     {
-        Task<Result<PagedResult<CommentResponse>>> GetCommentsAsync(int page, int pageSize, CancellationToken ct = default);
+        Task<Result<PagedResult<CommentResponse>>> GetCommentsAsync(GetPagedCommentsRequest request, CancellationToken ct = default);
         Task<Result<CommentResponse>> GetCommentAsync(Guid id, CancellationToken ct = default);
         Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest createCommentDto, CancellationToken ct = default);
     }
