@@ -26,6 +26,15 @@ namespace Infrastructure.Persistence.Context
                 .HasForeignKey(a => a.CommentId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Comment>()
+                .HasIndex(c => c.CreatedAt);
+
+            builder.Entity<Comment>()
+                .HasIndex(c => c.ParentId);
+
+            builder.Entity<Comment>()
+                .HasIndex(c => c.RootId);
         }
     }
 }

@@ -11,11 +11,8 @@ namespace API.Controllers
     public class CommentsController(ICommentService commentService) : ControllerBase
     {
         [HttpGet]
-        public async Task<IActionResult> GetComments(
-        [FromQuery] GetPagedCommentsRequest request, CancellationToken ct)
-        {
-            var result = await commentService.GetCommentsAsync(
-                request.PageNumber, request.PageSize, ct);
+        public async Task<IActionResult> GetComments([FromQuery] GetPagedCommentsRequest request, CancellationToken ct){
+            var result = await commentService.GetCommentsAsync(request, ct);
 
             return result.IsSuccess
                 ? Ok(result.Value)
@@ -23,19 +20,15 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateComment(
-            [FromBody] CreateCommentRequest request, CancellationToken ct)
-        {
+        public async Task<IActionResult> CreateComment([FromBody] CreateCommentRequest request, CancellationToken ct){
             var result = await commentService.CreateCommentAsync(request, ct);
             return result.IsSuccess
-                ? CreatedAtAction(nameof(GetComments), new { id = result.Value!.Id }, result.Value)
+                ? CreatedAtAction(nameof(GetComment), new { id = result.Value!.Id }, result.Value)
                 : result.ToActionResult();
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetComment(
-            [FromRoute] Guid id, CancellationToken ct)
-        {
+        public async Task<IActionResult> GetComment([FromRoute] Guid id, CancellationToken ct){
             var result = await commentService.GetCommentAsync(id, ct);
             return result.IsSuccess
                 ? Ok(result.Value)

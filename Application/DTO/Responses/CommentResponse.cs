@@ -6,6 +6,9 @@
         string UserEmail,
         string? HomePageUrl,
         string Content,
-        Guid? ParentCommentId
-    );
+        Guid? ParentId,
+        DateTime CreatedAt)
+    {
+        public List<CommentResponse> Replies { get; } = new();
+    }
 }
