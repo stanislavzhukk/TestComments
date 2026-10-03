@@ -21,6 +21,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+builder.Services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
 
 builder.Services.AddControllers();
 
@@ -62,23 +63,7 @@ using (var scope = app.Services.CreateScope())
         
         throw new Exception($"Error during migration: {ex.Message} | {ex.InnerException}");
     }
-
-        //    await RolesSeeder.SeedRoles(services);
-
-        //    if (userManager.Users.Count() < 2)
-        //    {
-        //        await UsersSeeder.SeedUsers(services);
-        //    }
-        //    if (!dbContext.Model1s.Any())
-        //    {
-        //        await ModelsSeeder.SeedModels(services);
-        //    }
-        //}
-        //catch (Exception ex)
-        //{
-        //    Console.WriteLine($"error during migration/seeds: {ex.Message} | {ex.InnerException}");
-        //}
-    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

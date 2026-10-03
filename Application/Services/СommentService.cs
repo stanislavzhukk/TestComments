@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Services
 {
-    public class CommentService(IAppDbContext appDbContext) : ICommentService
+    public class CommentService(IAppDbContext appDbContext, ICommentContentSanitizer messageSanitizer) : ICommentService
     {
         public async Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest request, CancellationToken ct = default)
         {
@@ -25,19 +25,16 @@ namespace Application.Services
                 rootId = parent.RootId ?? parent.Id;
             }
 
-            //captcha validation and other business logic
+            //TODO captcha validation
 
-            //html sanitization and validation
+            var sanitizedHtml = messageSanitizer.Sanitize(request.Content);
+            if (!sanitizedHtml.IsSuccess)
+            {
+                return Result.Failure<CommentResponse>(sanitizedHtml.Error!);
+            }
 
-            var html = request.Content; //sanitize html
-
-            //parentid and rootid validation
-
-            //file upload 
+            //TODO file upload 
             Attachment? attachment = null; //upload file and get attachment entity
-
-            //create comment entity and save to db
-
 
 
             var comment = new Comment
@@ -45,7 +42,7 @@ namespace Application.Services
                 UserName = request.UserName,
                 UserEmail = request.UserEmail,
                 HomePageUrl = request.HomePageUrl,
-                Content = html,
+                Content = sanitizedHtml.Value!,
                 ParentId = request.ParentCommentId,
                 RootId = rootId,
                 //AuthorIp = client.Ip,
@@ -87,9 +84,10 @@ namespace Application.Services
         {
             var pageSize = Math.Clamp(request.PageSize, 1, 25);
             var pageNumber = Math.Max(request.PageNumber, 1);
-            var totalCount = await appDbContext.Comments.CountAsync(cancellationToken: ct);
             var rootCommentsQuery = appDbContext.Comments.AsNoTracking()
                 .Where(c => c.ParentId == null);
+
+            var totalCount = await rootCommentsQuery.CountAsync(cancellationToken: ct);
 
             rootCommentsQuery = ApplySorting(rootCommentsQuery, request.SortBy, request.Desc);
 
