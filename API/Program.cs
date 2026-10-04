@@ -1,27 +1,29 @@
 using API.Extensions;
-using Application.Interfaces;
-using Application.Services;
+using Application;
+using Infrastructure;
 using Infrastructure.Persistence.Context;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Add DbContext with PostgreSQL provider
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+// Add infrastructure services
+builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add application services
+builder.Services.AddApplication(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
-//Add services
+// Add API services
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
-builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
-builder.Services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
+builder.Services.AddRateLimiter(o => o.AddFixedWindowLimiter("captcha", w =>
+{
+    w.PermitLimit = 20;
+    w.Window = TimeSpan.FromMinutes(1);
+}));
 
 builder.Services.AddControllers();
 
@@ -46,23 +48,8 @@ app.UseStatusCodePages();
 // Apply pending migrations and seed the database
 using (var scope = app.Services.CreateScope())
 {
-    var services = scope.ServiceProvider;
-
-    try
-    {
-        var dbContext = services.GetRequiredService<ApplicationDbContext>();
-        if (dbContext.Database.GetPendingMigrations().Any())
-        {
-            Console.WriteLine("Applying pending migrations...");
-            await dbContext.Database.MigrateAsync();
-            Console.WriteLine("Migrations applied successfully.");
-        }
-    }
-    catch(Exception ex)
-    {
-        
-        throw new Exception($"Error during migration: {ex.Message} | {ex.InnerException}");
-    }
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    await db.Database.MigrateAsync();
 }
 
 // Configure the HTTP request pipeline.
@@ -74,10 +61,6 @@ if (app.Environment.IsDevelopment())
 
 
 app.UseHttpsRedirection();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
 
 app.MapControllers();
 

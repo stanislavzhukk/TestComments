@@ -1,4 +1,4 @@
-﻿using Application.DTO.Requests.Comment;
+﻿using Application.DTO.Requests.Comments;
 using Application.DTO.Responses;
 using Domain.Common;
 

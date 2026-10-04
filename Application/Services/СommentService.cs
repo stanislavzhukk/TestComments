@@ -1,16 +1,36 @@
-﻿using Application.DTO.Requests.Comment;
+﻿using Application.DTO.Requests.Comments;
 using Application.DTO.Responses;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Application.Extensions;
 
 namespace Application.Services
 {
-    public class CommentService(IAppDbContext appDbContext, ICommentContentSanitizer messageSanitizer) : ICommentService
+    public class CommentService(IAppDbContext appDbContext, ICommentContentSanitizer messageSanitizer, 
+        ICaptchaService captchaService, IValidator<CreateCommentRequest> validator) : ICommentService
     {
         public async Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest request, CancellationToken ct = default)
         {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Result.Failure<CommentResponse>(validation.ToError());
+
+            var captchaResult = captchaService.ValidateCaptcha(request.Captcha);
+
+            if (!captchaResult.IsSuccess)
+            {
+                return Result.Failure<CommentResponse>(captchaResult.Error!);
+            }
+
+            var sanitizedHtml = messageSanitizer.Sanitize(request.Content);
+            if (!sanitizedHtml.IsSuccess)
+            {
+                return Result.Failure<CommentResponse>(sanitizedHtml.Error!);
+            }
+
             Guid? rootId = null;
             if (request.ParentCommentId is not null)
             {
@@ -20,17 +40,10 @@ namespace Application.Services
                     .FirstOrDefaultAsync(ct);
 
                 if (parent is null)
+                {
                     return Result.Failure<CommentResponse>(Error.NotFound("Comment.ParentNotFound", "Parent comment not found"));
-
+                }
                 rootId = parent.RootId ?? parent.Id;
-            }
-
-            //TODO captcha validation
-
-            var sanitizedHtml = messageSanitizer.Sanitize(request.Content);
-            if (!sanitizedHtml.IsSuccess)
-            {
-                return Result.Failure<CommentResponse>(sanitizedHtml.Error!);
             }
 
             //TODO file upload 
@@ -87,7 +100,7 @@ namespace Application.Services
             var rootCommentsQuery = appDbContext.Comments.AsNoTracking()
                 .Where(c => c.ParentId == null);
 
-            var totalCount = await rootCommentsQuery.CountAsync(cancellationToken: ct);
+            var totalCount = await rootCommentsQuery.CountAsync(ct);
 
             rootCommentsQuery = ApplySorting(rootCommentsQuery, request.SortBy, request.Desc);
 
@@ -102,7 +115,7 @@ namespace Application.Services
                     c.Content,
                     c.ParentId,
                     c.CreatedAt
-                )).ToListAsync(cancellationToken: ct);
+                )).ToListAsync(ct);
 
             var rootIds = rootComments.Select(r => r.Id).ToList();
 

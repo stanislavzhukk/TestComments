@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261003192503_AddedBasicIndexes")]
+    partial class AddedBasicIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -60,15 +63,13 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasMaxLength(5000)
-                        .HasColumnType("character varying(5000)");
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("HomePageUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("character varying(2048)");
+                        .HasColumnType("text");
 
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
@@ -78,13 +79,11 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("UserEmail")
                         .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("character varying(254)");
+                        .HasColumnType("text");
 
                     b.Property<string>("UserName")
                         .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

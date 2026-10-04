@@ -1,7 +1,6 @@
 ﻿using API.Extensions;
-using Application.DTO.Requests.Comment;
+using Application.DTO.Requests.Comments;
 using Application.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
