@@ -1,7 +1,6 @@
 using API.Extensions;
-using Application.Interfaces;
-using Application.Options;
-using Application.Services;
+using Application;
+using Infrastructure;
 using Infrastructure.Persistence.Context;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -9,36 +8,22 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-//Add DbContext with PostgreSQL provider
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
+// Add infrastructure services
+builder.Services.AddInfrastructure(builder.Configuration);
 
+// Add application services
+builder.Services.AddApplication(builder.Configuration);
 
 builder.Services.AddAuthorization();
 
-//Add services
+// Add API services
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
-builder.Services.AddMemoryCache();
-
-builder.Services.AddOptions<CaptchaOptions>()
-    .Bind(builder.Configuration.GetSection(CaptchaOptions.SectionName))
-    .Validate(o => o.CodeLength is >= 3 and <= 10, "Captcha:CodeLength must be 3-10")
-    .Validate(o => o.TtlMinutes > 0, "Captcha:TtlMinutes must be positive")
-    .Validate(o => o.Width > 0 && o.Height > 0, "Captcha size must be positive")
-    .ValidateOnStart();
 
 builder.Services.AddRateLimiter(o => o.AddFixedWindowLimiter("captcha", w =>
 {
     w.PermitLimit = 20;
     w.Window = TimeSpan.FromMinutes(1);
 }));
-
-builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
-builder.Services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
-builder.Services.AddScoped<ICaptchaService, CaptchaService>();
 
 builder.Services.AddControllers();
 
