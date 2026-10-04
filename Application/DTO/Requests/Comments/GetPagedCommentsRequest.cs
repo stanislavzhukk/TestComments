@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
-namespace Application.DTO.Requests.Comment
+﻿namespace Application.DTO.Requests.Comments
 {
     public sealed record GetPagedCommentsRequest(
         int PageNumber = 1,

@@ -7,6 +7,6 @@ namespace Application.Interfaces
     public interface ICaptchaService
     {
         Result<CaptchaResponse> GenerateCaptcha();
-        Result ValidateCaptcha(ValidateCaptchaRequest request);
+        Result ValidateCaptcha(CheckCaptchaRequest request);
     }
 }

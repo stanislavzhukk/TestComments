@@ -55,7 +55,7 @@ namespace Application.Services
             }
         }
 
-        public Result ValidateCaptcha(ValidateCaptchaRequest request)
+        public Result ValidateCaptcha(CheckCaptchaRequest request)
         {
             var key = CacheKey(request.CaptchaId.ToString());
 

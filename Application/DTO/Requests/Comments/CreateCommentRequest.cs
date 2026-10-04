@@ -1,16 +1,13 @@
 ﻿using Application.DTO.Requests.Captcha;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Application.DTO.Requests.Comment
+namespace Application.DTO.Requests.Comments
 {
     public sealed record CreateCommentRequest(
         string UserName,
         string UserEmail,
         string? HomePageUrl,
         string Content,
-        ValidateCaptchaRequest Captcha,
+        CheckCaptchaRequest Captcha,
         Guid? ParentCommentId = null
     );
 }

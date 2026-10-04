@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Application.DTO.Requests.Captcha
 {
-    public sealed record ValidateCaptchaRequest(
+    public sealed record CheckCaptchaRequest(
         Guid CaptchaId,
         string UserInput);
 }

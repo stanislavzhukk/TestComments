@@ -1,17 +1,23 @@
-﻿using Application.DTO.Requests.Comment;
+﻿using Application.DTO.Requests.Comments;
 using Application.DTO.Responses;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
+using Application.Extensions;
 
 namespace Application.Services
 {
     public class CommentService(IAppDbContext appDbContext, ICommentContentSanitizer messageSanitizer, 
-        ICaptchaService captchaService) : ICommentService
+        ICaptchaService captchaService, IValidator<CreateCommentRequest> validator) : ICommentService
     {
         public async Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest request, CancellationToken ct = default)
         {
+            var validation = await validator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+                return Result.Failure<CommentResponse>(validation.ToError());
+
             var captchaResult = captchaService.ValidateCaptcha(request.Captcha);
 
             if (!captchaResult.IsSuccess)
