@@ -1,18 +1,19 @@
-﻿using Application.DTO.Requests.Comments;
-using Application.DTO.Responses;
+﻿using Application.DTO.Responses;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Application.Extensions;
+using Application.DTO.Requests.Comments.Create;
+using Application.DTO.Requests.Comments.Get;
 
 namespace Application.Services
 {
     public class CommentService(IAppDbContext appDbContext, ICommentContentSanitizer messageSanitizer, 
-        ICaptchaService captchaService, IValidator<CreateCommentRequest> validator) : ICommentService
+        ICaptchaService captchaService, IValidator<CreateCommentRequest> validator, IFileStorageService fileStorage) : ICommentService
     {
-        public async Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest request, CancellationToken ct = default)
+        public async Task<Result<CommentResponse>> CreateCommentAsync(CreateCommentRequest request, ClientInfoRequest client, CancellationToken ct = default)
         {
             var validation = await validator.ValidateAsync(request, ct);
             if (!validation.IsValid)
@@ -46,9 +47,23 @@ namespace Application.Services
                 rootId = parent.RootId ?? parent.Id;
             }
 
-            //TODO file upload 
-            Attachment? attachment = null; //upload file and get attachment entity
+            Attachment? attachment = null;
+            if (request.File is not null)
+            {
+                var saved = await fileStorage.SaveAsync(request.File, ct);
+                if (saved.IsFailure)
+                {
+                    return Result.Failure<CommentResponse>(saved.Error!);
+                }
 
+                StoredFileResponse file = saved.Value!;
+                attachment = new Attachment
+                {
+                    Type = file.Type,
+                    StoredFileName = file.StoredFileName,
+                    OriginalFileName = SafeName(request.File.FileName),
+                };
+            }
 
             var comment = new Comment
             {
@@ -58,8 +73,8 @@ namespace Application.Services
                 Content = sanitizedHtml.Value!,
                 ParentId = request.ParentCommentId,
                 RootId = rootId,
-                //AuthorIp = client.Ip,
-                //AuthorUserAgent = client.UserAgent,
+                UserIp = client.Ip,
+                UserAgent = client.UserAgent,
                 CreatedAt = DateTime.UtcNow
             };
             if (attachment is not null)
@@ -77,12 +92,12 @@ namespace Application.Services
             {
                 if (attachment is not null)
                 {
-                    //files.Delete(attachment.StoredFileName);
+                    fileStorage.Delete(attachment.StoredFileName);
                 }
                 throw;
             }
 
-            return Result.Success(new CommentResponse(
+            var response = new CommentResponse(
                 comment.Id,
                 comment.UserName,
                 comment.UserEmail,
@@ -90,7 +105,16 @@ namespace Application.Services
                 comment.Content,
                 comment.ParentId,
                 comment.CreatedAt
-            ));
+            );
+
+            if (attachment is not null)
+            {
+                response.Attachments.Add(new AttachmentResponse(
+                    attachment.Type, 
+                    $"/uploads/{attachment.StoredFileName}", 
+                    attachment.OriginalFileName));
+            }
+            return Result.Success(response);
         }
 
         public async Task<Result<PagedResult<CommentResponse>>> GetCommentsAsync(GetPagedCommentsRequest request, CancellationToken ct = default)
@@ -167,11 +191,31 @@ namespace Application.Services
                     c.CreatedAt))
                 .ToListAsync(ct);
 
+            await AttachFilesAsync([.. roots, .. replies], ct);
+
             Dictionary<Guid, CommentResponse> commentsById = roots.Concat(replies).ToDictionary(x => x.Id);
 
             foreach (var reply in replies)
             {
                 commentsById[reply.ParentId!.Value].Replies.Add(reply);
+            }
+        }
+
+        private async Task AttachFilesAsync(IReadOnlyCollection<CommentResponse> comments, CancellationToken ct)
+        {
+            var ids = comments.Select(c => c.Id).ToList();
+
+            var attachments = await appDbContext.Attachments.AsNoTracking()
+                .Where(a => ids.Contains(a.CommentId))
+                .Select(a => new { a.CommentId, a.Type, a.StoredFileName, a.OriginalFileName })
+                .ToListAsync(ct);
+
+            var commentsById = comments.ToDictionary(c => c.Id);
+
+            foreach (var a in attachments)
+            {
+                commentsById[a.CommentId].Attachments.Add(
+                    new AttachmentResponse(a.Type, $"/uploads/{a.StoredFileName}", a.OriginalFileName));
             }
         }
 
@@ -186,6 +230,12 @@ namespace Application.Services
                 ("createdAt", false) => query.OrderBy(c => c.CreatedAt).ThenBy(c => c.Id),
                 _ => query.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id)
             };
+        }
+
+        private static string SafeName(string fileName)
+        {
+            var name = Path.GetFileName(fileName);
+            return name.Length > 255 ? name[..255] : name;
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace Application.DTO.Requests.Comments
+﻿namespace Application.DTO.Requests.Comments.Get
 {
     public sealed record GetPagedCommentsRequest(
         int PageNumber = 1,

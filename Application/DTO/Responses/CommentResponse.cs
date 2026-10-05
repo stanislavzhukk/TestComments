@@ -10,5 +10,6 @@
         DateTime CreatedAt)
     {
         public List<CommentResponse> Replies { get; } = new();
+        public List<AttachmentResponse> Attachments { get; } = new();
     }
 }
