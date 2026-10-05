@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for testcomments on 2026-10-05T17:46:02Z
+# fly.toml app configuration file generated for testcomments on 2026-10-05T19:12:53Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -8,7 +8,10 @@ primary_region = 'ams'
 
 [build]
   dockerfile = 'API/Dockerfile'
-  context = "."
+
+[[mounts]]
+  source = 'uploads_vol'
+  destination = '/uploads'
 
 [http_service]
   internal_port = 8080
@@ -16,10 +19,6 @@ primary_region = 'ams'
   auto_stop_machines = 'stop'
   auto_start_machines = true
   min_machines_running = 0
-
-[mounts]
-  source = "uploads_vol"
-  destination = "/uploads"
 
 [[vm]]
   memory = '1gb'
