@@ -7,7 +7,7 @@ app = 'testcomments'
 primary_region = 'ams'
 
 [build]
-  dockerfile = 'Dockerfile'
+  dockerfile = 'API/Dockerfile'
   context = "."
 
 [http_service]
