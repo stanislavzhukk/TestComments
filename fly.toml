@@ -1,3 +1,8 @@
+# fly.toml app configuration file generated for testcomments on 2026-10-05T17:46:02Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
 app = 'testcomments'
 primary_region = 'ams'
 
