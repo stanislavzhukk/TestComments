@@ -11,13 +11,13 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: /API/Dockerfile
       target: final
     container_name: api-dev
     ports:
       - 8080:8080
     environment:
-      - ConnectionStrings__DefaultConnection=User ID=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};
+      - ConnectionStrings__DefaultConnection=Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD};Database=${POSTGRES_DB};
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_ENVIRONMENT=Development
@@ -28,7 +28,7 @@ services:
     networks:
       - dev
     volumes:
-      - local_uploads:/app/uploads
+      - local_uploads:/app/uploads  
 
   postgres:
     image: postgres:16
