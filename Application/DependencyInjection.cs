@@ -1,5 +1,5 @@
 using Application.DTO.Requests.Captcha;
-using Application.DTO.Requests.Comments;
+using Application.DTO.Requests.Comments.Create;
 using Application.Interfaces;
 using Application.Options;
 using Application.Services;
