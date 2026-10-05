@@ -5,6 +5,7 @@ networks:
 volumes:
   db-data: {}
   pgadmin-data: {}
+  local_uploads: {}
 
 services:
   api:
@@ -20,11 +21,14 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - ASPNETCORE_HTTP_PORTS=8080
       - ASPNETCORE_ENVIRONMENT=Development
+      - FileStorage__UploadsPath=/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - dev
+    volumes:
+      - local_uploads:/app/uploads
 
   postgres:
     image: postgres:16

@@ -12,9 +12,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHttpContextAccessor();
 // Add infrastructure services
+
 var uploadsPath = Path.GetFullPath(
     builder.Configuration["FileStorage:UploadsPath"] ?? "uploads");
-Directory.CreateDirectory(uploadsPath);
+
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
 
 builder.Services.AddInfrastructure(builder.Configuration);
 

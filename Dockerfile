@@ -35,7 +35,11 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libfontconfig1 \
         fonts-dejavu-core \
+        libgssapi-krb5-2 \
     && rm -rf /var/lib/apt/lists/*
+
+
+RUN mkdir -p /app/uploads && chown -R $APP_UID:$APP_UID /app/uploads
 
 WORKDIR /app
 COPY --from=publish /app/publish .
