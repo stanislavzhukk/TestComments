@@ -4,14 +4,21 @@ using Infrastructure;
 using Infrastructure.Persistence.Context;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddHttpContextAccessor();
 // Add infrastructure services
+var uploadsPath = Path.GetFullPath(
+    builder.Configuration["FileStorage:UploadsPath"] ?? "uploads");
+Directory.CreateDirectory(uploadsPath);
+
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add application services
+// Add application services 
 builder.Services.AddApplication(builder.Configuration);
 
 builder.Services.AddAuthorization();
@@ -25,7 +32,11 @@ builder.Services.AddRateLimiter(o => o.AddFixedWindowLimiter("captcha", w =>
     w.Window = TimeSpan.FromMinutes(1);
 }));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -43,6 +54,20 @@ builder.Services.AddProblemDetails();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads",
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.XContentTypeOptions = "nosniff";
+
+        if (ctx.File.Name.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
+            ctx.Context.Response.Headers.ContentType = "text/plain; charset=utf-8";
+    }
+});
+
 app.UseStatusCodePages();
 
 // Apply pending migrations and seed the database

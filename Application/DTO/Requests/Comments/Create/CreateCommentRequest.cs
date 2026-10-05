@@ -1,6 +1,6 @@
 ﻿using Application.DTO.Requests.Captcha;
 
-namespace Application.DTO.Requests.Comments
+namespace Application.DTO.Requests.Comments.Create
 {
     public sealed record CreateCommentRequest(
         string UserName,
@@ -8,6 +8,7 @@ namespace Application.DTO.Requests.Comments
         string? HomePageUrl,
         string Content,
         CheckCaptchaRequest Captcha,
-        Guid? ParentCommentId = null
+        Guid? ParentCommentId = null,
+        FileUploadRequest? File = null
     );
 }

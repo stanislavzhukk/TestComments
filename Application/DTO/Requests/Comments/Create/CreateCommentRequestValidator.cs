@@ -4,7 +4,7 @@ using Domain.Constants;
 using FluentValidation;
 using Microsoft.Extensions.Options;
 
-namespace Application.DTO.Requests.Comments
+namespace Application.DTO.Requests.Comments.Create
 {
     public class CreateCommentRequestValidator : AbstractValidator<CreateCommentRequest>
     {
