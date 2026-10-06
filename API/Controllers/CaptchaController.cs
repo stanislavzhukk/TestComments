@@ -1,8 +1,8 @@
 ﻿using API.Extensions;
-using Application.DTO.Requests.Captcha;
+using Application.DTO.Responses;
 using Application.Interfaces;
+using Domain.Common;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers
 {
@@ -11,6 +11,9 @@ namespace API.Controllers
     public class CaptchaController(ICaptchaService captchaService) : ControllerBase
     {
         [HttpGet("generate")]
+        [EndpointSummary("Generates a new CAPTCHA challenge.")]
+        [ProducesResponseType<Result<CaptchaResponse>>(StatusCodes.Status200OK)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status400BadRequest)]
         public IActionResult GenerateCaptcha()
         {
             var result = captchaService.GenerateCaptcha();

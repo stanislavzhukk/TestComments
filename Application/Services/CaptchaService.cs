@@ -114,8 +114,7 @@ namespace Application.Services
 
             AddNoise(canvas, width, height, true);
 
-            using var image = SKImage.FromBitmap(bitmap);
-            using var data = image.Encode(
+            using var data = bitmap.Encode(
                 SKEncodedImageFormat.Png,
                 100);
 
