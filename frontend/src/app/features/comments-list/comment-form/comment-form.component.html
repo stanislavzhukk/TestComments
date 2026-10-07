@@ -17,6 +17,7 @@
     </label>
   </div>
 
+  <span class="field-label content-label">Comment <span class="required-marker" aria-hidden="true">*</span></span>
   <div class="editor">
     <div class="toolbar" role="toolbar" aria-label="Formatting">
       <button type="button" title="Italic" (click)="wrapSelection('i')"><i>I</i></button>
@@ -27,7 +28,6 @@
       <button type="button" class="file-button" title="Attach file" (click)="openFilePicker()">＋</button>
     </div>
 
-    <span class="field-label content-label">Comment <span class="required-marker" aria-hidden="true">*</span></span>
     <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
 
     <label
