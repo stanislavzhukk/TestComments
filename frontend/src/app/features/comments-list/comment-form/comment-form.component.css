@@ -152,7 +152,7 @@ textarea {
   min-height: 34px;
 }
 
-.captcha { display: flex; align-items: center; gap: 5px; }
+.captcha { display: flex; align-items: flex-start; gap: 5px; }
 .captcha img {
   width: 148px;
   height: 54px;
@@ -163,6 +163,7 @@ textarea {
   background: #f7f8fb;
 }
 .captcha input { width: 86px; height: 34px !important; }
+.captcha-field { display: flex; flex-direction: column; align-items: flex-start; }
 .refresh-button {
   padding: 2px 4px;
   border: 0;

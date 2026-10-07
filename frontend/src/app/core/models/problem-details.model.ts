@@ -10,3 +10,8 @@ export interface ProblemDetails {
 export interface ValidationProblemDetails extends ProblemDetails {
     errors: Record<string, string[]>;
 }
+
+export function isValidationProblem(body: unknown): body is ValidationProblemDetails {
+  const errors = (body as { errors?: unknown } | null)?.errors;
+  return typeof errors === 'object' && errors !== null;
+}

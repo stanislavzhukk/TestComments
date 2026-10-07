@@ -1,9 +1,13 @@
-// comment-form.component.ts
 import { Component, ElementRef, inject, input, OnInit, output, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommentsApiService } from '../../../core/services/api/comments-api.service';
-import { CaptchaApiService } from '../../../core/services/api/captcha-api.service'; // assumed path
+import { CaptchaApiService } from '../../../core/services/api/captcha-api.service';
+import { isValidationProblem, ProblemDetails } from '../../../core/models/problem-details.model';
+
+const CAPTCHA_LENGTH = 5;
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.gif', '.png', '.txt'];
+const MAX_TEXT_FILE_BYTES = 100 * 1024;
 
 @Component({
   selector: 'app-comment-form',
@@ -15,6 +19,8 @@ export class CommentFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder).nonNullable;
   private readonly commentsApi = inject(CommentsApiService);
   private readonly captchaApi = inject(CaptchaApiService);
+
+  readonly captchaLength = CAPTCHA_LENGTH;
 
   parentId = input<string | null>(null);
   created = output<void>();
@@ -37,7 +43,7 @@ export class CommentFormComponent implements OnInit {
     content: ['', [Validators.required]],
     captcha: this.fb.group({
       captchaId: [''],
-      userInput: ['', [Validators.maxLength(5), Validators.minLength(5)]],
+      userInput: ['', [Validators.minLength(CAPTCHA_LENGTH), Validators.maxLength(CAPTCHA_LENGTH)]],
     }),
   });
 
@@ -45,11 +51,27 @@ export class CommentFormComponent implements OnInit {
     this.loadCaptcha();
   }
 
-  loadCaptcha() {
-    this.captchaApi.getCaptcha().subscribe(c => {
-      this.captchaImage.set(c.image);
-      this.form.controls.captcha.patchValue({ captchaId: c.id, userInput: '' });
+  loadCaptcha(serverError?: string | null) {
+    this.captchaApi.getCaptcha().subscribe({
+      next: c => {
+        this.captchaImage.set(c.image);
+
+        const captcha = this.form.controls.captcha;
+        captcha.patchValue({ captchaId: c.id, userInput: '' });
+
+        if (serverError) {
+          captcha.controls.userInput.setErrors({ server: serverError });
+          captcha.controls.userInput.markAsTouched();
+        }
+      },
+      error: () => {
+        if (serverError) this.generalError.set(serverError);
+      },
     });
+  }
+
+  openFilePicker() {
+    this.fileInput()?.nativeElement.click();
   }
 
   onFileSelected(event: Event) {
@@ -81,14 +103,16 @@ export class CommentFormComponent implements OnInit {
       return;
     }
 
-    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
-    if (!['.jpg', '.jpeg', '.gif', '.png', '.txt'].includes(extension)) {
+    const dot = file.name.lastIndexOf('.');
+    const extension = dot >= 0 ? file.name.slice(dot).toLowerCase() : '';
+
+    if (!ALLOWED_EXTENSIONS.includes(extension)) {
       this.file.set(null);
       this.fileError.set('Allowed formats: JPG, GIF, PNG, TXT');
       return;
     }
 
-    if (extension === '.txt' && file.size > 100 * 1024) {
+    if (extension === '.txt' && file.size > MAX_TEXT_FILE_BYTES) {
       this.file.set(null);
       this.fileError.set('Text file must be 100 KB or less');
       return;
@@ -133,8 +157,8 @@ export class CommentFormComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.isSubmitting.set(false);
-          this.applyServerErrors(err);
-          this.loadCaptcha();
+          const captchaMessage = this.applyServerErrors(err);
+          this.loadCaptcha(captchaMessage);
         },
       });
   }
@@ -147,72 +171,41 @@ export class CommentFormComponent implements OnInit {
     if (c.errors['email']) return 'Invalid email address';
     if (c.errors['pattern']) return 'Invalid value';
     if (c.errors['maxlength']) return 'Value is too long';
-    if (c.errors['minlength']) return 'Captcha must contain exactly 5 characters';
+    if (c.errors['minlength']) return `Captcha must contain exactly ${CAPTCHA_LENGTH} characters`;
     return null;
   }
 
-  private applyServerErrors(err: HttpErrorResponse) {
-    const response = this.getErrorResponse(err);
-    const errors = response?.errors;
-    let hasFieldErrors = false;
+  private applyServerErrors(err: HttpErrorResponse): string | null {
+    const body = typeof err.error === 'object' ? (err.error as ProblemDetails | null) : null;
+    let handled = false;
+    let captchaMessage: string | null = null;
 
-    if (errors) {
-      for (const [key, messages] of Object.entries(errors)) {
-        const message = messages.find(Boolean);
+    if (isValidationProblem(body)) {
+      for (const [key, messages] of Object.entries(body.errors)) {
+        const message = messages[0];
         if (!message) continue;
+        handled = true;
 
-      const path = key
-        .split('.')
-        .map(p => p.charAt(0).toLowerCase() + p.slice(1))
-        .join('.');
+        if (key === 'captcha.userInput') {
+          captchaMessage = message;
+          continue;
+        }
 
-      const control = this.form.get(path);
-      if (control) {
-        hasFieldErrors = true;
-        control.setErrors({ server: message });
-        control.markAsTouched();
-      } else {
-        this.generalError.set(message);
-      }
-      }
-    }
-
-    const generalMessage = response?.detail || response?.title || err.message;
-    if (!hasFieldErrors) {
-      this.generalError.set(generalMessage || 'Failed to submit the comment');
-    }
-  }
-
-  private getErrorResponse(err: HttpErrorResponse): {
-    title?: string;
-    detail?: string;
-    errors?: Record<string, string[]>;
-  } | null {
-    if (!err.error || typeof err.error !== 'object') return null;
-
-    const response = err.error as {
-      title?: unknown;
-      detail?: unknown;
-      errors?: unknown;
-    };
-
-    const errors: Record<string, string[]> = {};
-    if (response.errors && typeof response.errors === 'object') {
-      for (const [key, value] of Object.entries(response.errors as Record<string, unknown>)) {
-        if (Array.isArray(value)) {
-          const messages = value.filter((message): message is string => typeof message === 'string');
-          if (messages.length) errors[key] = messages;
-        } else if (typeof value === 'string') {
-          errors[key] = [value];
+        const control = this.form.get(key);
+        if (control) {
+          control.setErrors({ server: message });
+          control.markAsTouched();
+        } else {
+          this.generalError.set(message);
         }
       }
     }
 
-    return {
-      title: typeof response.title === 'string' ? response.title : undefined,
-      detail: typeof response.detail === 'string' ? response.detail : undefined,
-      errors: Object.keys(errors).length ? errors : undefined,
-    };
+    if (!handled) {
+      this.generalError.set(body?.detail || body?.title || 'Failed to submit the comment');
+    }
+
+    return captchaMessage;
   }
 
   wrapSelection(tag: 'i' | 'strong' | 'code' | 'a') {
@@ -240,7 +233,7 @@ export class CommentFormComponent implements OnInit {
       const caret = start + open.length;
       el.setSelectionRange(caret, caret);
     }
-}
+  }
 
   private resetForm() {
     this.form.reset();
