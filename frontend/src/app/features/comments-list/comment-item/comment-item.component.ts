@@ -3,6 +3,7 @@ import { CommentResponse } from '../../../core/models/responses/comment-response
 import { DatePipe } from '@angular/common';
 import { AttachmentType } from '../../../core/models/responses/attachment-response';
 import { CommentFormComponent } from '../comment-form/comment-form.component';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-comment-item',
@@ -11,6 +12,7 @@ import { CommentFormComponent } from '../comment-form/comment-form.component';
   styleUrl: './comment-item.component.css'
 })
 export class CommentItemComponent {
+  readonly apiUrl = environment.apiUrl;
   readonly comment = input.required<CommentResponse>();
   readonly depth = input<number>(0);
   readonly activeReplyId = input<string | null>(null);
