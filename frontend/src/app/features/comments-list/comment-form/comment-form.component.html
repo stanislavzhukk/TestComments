@@ -1,12 +1,12 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
   <div class="author-fields">
     <label>
-      <span>Name</span>
+      <span class="field-label">Name <span class="required-marker" aria-hidden="true">*</span></span>
       <input formControlName="userName" placeholder="Your name" />
       @if (errorOf('userName'); as e) { <small class="error">{{ e }}</small> }
     </label>
     <label>
-      <span>Email</span>
+      <span class="field-label">Email <span class="required-marker" aria-hidden="true">*</span></span>
       <input formControlName="userEmail" type="email" placeholder="you@example.com" />
       @if (errorOf('userEmail'); as e) { <small class="error">{{ e }}</small> }
     </label>
@@ -27,6 +27,7 @@
       <button type="button" class="file-button" title="Attach file" (click)="openFilePicker()">＋</button>
     </div>
 
+    <span class="field-label content-label">Comment <span class="required-marker" aria-hidden="true">*</span></span>
     <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
 
     <label
@@ -59,8 +60,11 @@
     <div class="captcha" formGroupName="captcha">
       <img [src]="captchaImage()" alt="Captcha" />
       <button type="button" class="refresh-button" (click)="loadCaptcha()" title="Refresh captcha">↻</button>
-      <input formControlName="userInput" [attr.maxlength]="captchaLength" placeholder="Enter code" autocomplete="off" />
-      @if (errorOf('captcha.userInput'); as e) { <small class="error">{{ e }}</small> }
+      <div class="captcha-field">
+        <span class="field-label">Captcha <span class="required-marker" aria-hidden="true">*</span></span>
+        <input formControlName="userInput" [attr.maxlength]="captchaLength" placeholder="Enter code" autocomplete="off" />
+        @if (errorOf('captcha.userInput'); as e) { <small class="error">{{ e }}</small> }
+      </div>
     </div>
 
     @if (generalError(); as e) { <p class="error general-error">{{ e }}</p> }

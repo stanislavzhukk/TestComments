@@ -43,7 +43,7 @@ export class CommentFormComponent implements OnInit {
     content: ['', [Validators.required]],
     captcha: this.fb.group({
       captchaId: [''],
-      userInput: ['', [Validators.minLength(CAPTCHA_LENGTH), Validators.maxLength(CAPTCHA_LENGTH)]],
+      userInput: ['', [Validators.required, Validators.minLength(CAPTCHA_LENGTH), Validators.maxLength(CAPTCHA_LENGTH)]],
     }),
   });
 
@@ -188,7 +188,7 @@ export class CommentFormComponent implements OnInit {
 
         if (key === 'captcha.userInput') {
           captchaMessage = message;
-          continue;
+          continue; 
         }
 
         const control = this.form.get(key);
