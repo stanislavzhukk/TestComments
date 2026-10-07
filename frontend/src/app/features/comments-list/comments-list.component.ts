@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, inject, OnInit, signal, viewChild } from '@angular/core';
 import { CommentResponse } from '../../core/models/responses/comment-response';
 import { CommentsApiService } from '../../core/services/api/comments-api.service';
 import { GetPagedCommentsRequest } from '../../core/models/requests/get-paged-comments-request';
@@ -34,6 +34,7 @@ export class CommentsListComponent implements OnInit {
 
   replyingToId = signal<string | null>(null);
   expandedReplies = signal<Set<string>>(new Set());
+  private readonly commentsContainer = viewChild<ElementRef<HTMLElement>>('commentsContainer');
 
   ngOnInit() {
     this.request$
@@ -65,6 +66,7 @@ export class CommentsListComponent implements OnInit {
 
   changePage(newPage: number): void {
     this.paginationRequest.update(cur => ({ ...cur, pageNumber: newPage }));
+    this.commentsContainer()?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   changeSort(sortBy: string): void {
