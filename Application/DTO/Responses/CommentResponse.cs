@@ -11,5 +11,8 @@
     {
         public List<CommentResponse> Replies { get; } = new();
         public List<AttachmentResponse> Attachments { get; } = new();
+        public int RepliesCount { get; private set; }
+
+        public void SetRepliesCount(int count) => RepliesCount = count;
     }
 }

@@ -199,6 +199,17 @@ namespace Application.Services
             {
                 commentsById[reply.ParentId!.Value].Replies.Add(reply);
             }
+
+            var replyCounts = await appDbContext.Comments.AsNoTracking()
+                .Where(c => c.RootId != null && rootIds.Contains(c.RootId.Value))
+                .GroupBy(c => c.RootId!.Value)
+                .Select(group => new { RootId = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(x => x.RootId, x => x.Count, ct);
+
+            foreach (var root in roots)
+            {
+                root.SetRepliesCount(replyCounts.GetValueOrDefault(root.Id));
+            }
         }
 
         private async Task AttachFilesAsync(IReadOnlyCollection<CommentResponse> comments, CancellationToken ct)

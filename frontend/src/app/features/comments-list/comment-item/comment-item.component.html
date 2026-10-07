@@ -3,7 +3,7 @@
     <span class="avatar" [style.background]="avatarColor()">{{ initial() }}</span>
     <div class="author-info">
       <strong class="author">{{ comment().userName }}</strong>
-      <time class="date">{{ comment().createdAt | date: 'dd.MM.yy в HH:mm' }}</time>
+      <time class="date">{{ comment().createdAt | date: 'd MMM y HH:mm' }}</time>
     </div>
     <button type="button" class="reply-icon" title="Reply" aria-label="Reply" (click)="replyTo.emit(comment())">↩</button>
   </header>
@@ -26,7 +26,7 @@
       @if (comment().replies?.length && depth() === 0) {
         <button type="button" class="replies-btn" (click)="toggleReplies.emit(comment().id)">
           <span class="replies-line"></span>
-          {{ repliesExpanded() ? 'Hide replies' : 'Replies' }} · {{ comment().replies.length }}
+          {{ repliesExpanded() ? 'Hide replies' : 'Replies' }} · {{ comment().repliesCount }}
         </button>
       }
     </div>

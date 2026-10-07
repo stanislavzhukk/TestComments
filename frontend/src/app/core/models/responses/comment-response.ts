@@ -9,5 +9,6 @@ export interface CommentResponse {
     parentId?: string,
     createdAt: Date,
     replies: CommentResponse[],
+    repliesCount: number,
     attachments: AttachmentResponse[]
 }
