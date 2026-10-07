@@ -22,8 +22,10 @@ export class CommentFormComponent implements OnInit {
 
   isSubmitting = signal(false);
   generalError = signal<string | null>(null);
+  fileError = signal<string | null>(null);
   captchaImage = signal<string>('');
   file = signal<File | null>(null);
+  isFileDragging = signal(false);
 
   private fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private contentInput = viewChild<ElementRef<HTMLTextAreaElement>>('contentInput');
@@ -35,7 +37,7 @@ export class CommentFormComponent implements OnInit {
     content: ['', [Validators.required]],
     captcha: this.fb.group({
       captchaId: [''],
-      userInput: ['', [Validators.required, Validators.maxLength(5), Validators.minLength(5)]],
+      userInput: ['', [Validators.maxLength(5), Validators.minLength(5)]],
     }),
   });
 
@@ -52,11 +54,53 @@ export class CommentFormComponent implements OnInit {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    this.file.set(input.files?.[0] ?? null);
+    this.setFile(input.files?.[0] ?? null);
+  }
+
+  onFileDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.isFileDragging.set(true);
+  }
+
+  onFileDragLeave(event: DragEvent) {
+    event.preventDefault();
+    this.isFileDragging.set(false);
+  }
+
+  onFileDrop(event: DragEvent) {
+    event.preventDefault();
+    this.isFileDragging.set(false);
+    this.setFile(event.dataTransfer?.files[0] ?? null);
+  }
+
+  private setFile(file: File | null) {
+    this.fileError.set(null);
+
+    if (!file) {
+      this.file.set(null);
+      return;
+    }
+
+    const extension = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+    if (!['.jpg', '.jpeg', '.gif', '.png', '.txt'].includes(extension)) {
+      this.file.set(null);
+      this.fileError.set('Allowed formats: JPG, GIF, PNG, TXT');
+      return;
+    }
+
+    if (extension === '.txt' && file.size > 100 * 1024) {
+      this.file.set(null);
+      this.fileError.set('Text file must be 100 KB or less');
+      return;
+    }
+
+    this.file.set(file);
   }
 
   clearFile() {
     this.file.set(null);
+    this.fileError.set(null);
+    this.isFileDragging.set(false);
     const input = this.fileInput()?.nativeElement;
     if (input) input.value = '';
   }
@@ -134,7 +178,7 @@ export class CommentFormComponent implements OnInit {
     }
 
     const generalMessage = response?.detail || response?.title || err.message;
-    if (!hasFieldErrors || response?.detail || response?.title) {
+    if (!hasFieldErrors) {
       this.generalError.set(generalMessage || 'Failed to submit the comment');
     }
   }

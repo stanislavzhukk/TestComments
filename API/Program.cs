@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
+using Infrastructure.Seeders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -108,6 +109,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
+    await CommentsSeeder.SeedAsync(db);
 }
 
 // Configure the HTTP request pipeline.

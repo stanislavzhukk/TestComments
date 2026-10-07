@@ -26,10 +26,20 @@
       <span class="toolbar-divider"></span>
       <label class="file-button" title="Attach file">
         <span>＋</span>
-        <input #fileInput type="file" (change)="onFileSelected($event)" />
+        <input #fileInput type="file" accept=".jpg,.jpeg,.gif,.png,.txt" (change)="onFileSelected($event)" />
       </label>
     </div>
     <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
+    <label
+      class="drop-zone"
+      [class.dragging]="isFileDragging()"
+      (dragover)="onFileDragOver($event)"
+      (dragleave)="onFileDragLeave($event)"
+      (drop)="onFileDrop($event)">
+      <span>Drop a file here or click to choose</span>
+      <small>JPG, GIF, PNG or TXT (TXT up to 100 KB)</small>
+      <input type="file" accept=".jpg,.jpeg,.gif,.png,.txt" (change)="onFileSelected($event)" />
+    </label>
     @if (file(); as selectedFile) {
       <div class="selected-file">
         <span class="file-icon">📎</span>
@@ -40,6 +50,7 @@
         <button type="button" class="remove-file" title="Remove file" (click)="clearFile()">×</button>
       </div>
     }
+    @if (fileError(); as e) { <small class="error">{{ e }}</small> }
     @if (errorOf('content'); as e) { <small class="error">{{ e }}</small> }
   </div>
 
