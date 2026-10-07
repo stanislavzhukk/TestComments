@@ -17,51 +17,55 @@
     </label>
   </div>
 
-  <span class="field-label content-label">Comment <span class="required-marker" aria-hidden="true">*</span></span>
-  <div class="editor">
-    <div class="toolbar" role="toolbar" aria-label="Formatting">
-      <button type="button" title="Italic" (click)="wrapSelection('i')"><i>I</i></button>
-      <button type="button" title="Bold" (click)="wrapSelection('strong')"><strong>B</strong></button>
-      <button type="button" title="Code" (click)="wrapSelection('code')">&lt;/&gt;</button>
-      <button type="button" title="Link" (click)="wrapSelection('a')">↗</button>
-      <span class="toolbar-divider"></span>
-      <button type="button" class="file-button" title="Attach file" (click)="openFilePicker()">＋</button>
-    </div>
-
-    <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
-
-    <label
-      class="drop-zone"
-      [class.dragging]="isFileDragging()"
-      (dragover)="onFileDragOver($event)"
-      (dragleave)="onFileDragLeave($event)"
-      (drop)="onFileDrop($event)">
-      <span>Drop a file here or click to choose</span>
-      <small>JPG, GIF, PNG or TXT (TXT up to 100 KB)</small>
-      <input #fileInput type="file" accept=".jpg,.jpeg,.gif,.png,.txt" (change)="onFileSelected($event)" />
-    </label>
-
-    @if (file(); as selectedFile) {
-      <div class="selected-file">
-        <span class="file-icon">📎</span>
-        <span class="file-details">
-          <strong>{{ selectedFile.name }}</strong>
-          <small>{{ formatFileSize(selectedFile.size) }}</small>
-        </span>
-        <button type="button" class="remove-file" title="Remove file" (click)="clearFile()">×</button>
+  <div class="editor-field">
+    <span class="field-label content-label">Comment <span class="required-marker" aria-hidden="true">*</span></span>
+    <div class="editor">
+      <div class="toolbar" role="toolbar" aria-label="Formatting">
+        <button type="button" title="Italic" (click)="wrapSelection('i')"><i>I</i></button>
+        <button type="button" title="Bold" (click)="wrapSelection('strong')"><strong>B</strong></button>
+        <button type="button" title="Code" (click)="wrapSelection('code')">&lt;/&gt;</button>
+        <button type="button" title="Link" (click)="wrapSelection('a')">↗</button>
+        <span class="toolbar-divider"></span>
+        <button type="button" class="file-button" title="Attach file" (click)="openFilePicker()">＋</button>
       </div>
-    }
 
-    @if (fileError(); as e) { <small class="error">{{ e }}</small> }
-    @if (errorOf('content'); as e) { <small class="error">{{ e }}</small> }
+      <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
+
+      <label
+        class="drop-zone"
+        [class.dragging]="isFileDragging()"
+        (dragover)="onFileDragOver($event)"
+        (dragleave)="onFileDragLeave($event)"
+        (drop)="onFileDrop($event)">
+        <span>Drop a file here or click to choose</span>
+        <small>JPG, GIF, PNG or TXT (TXT up to 100 KB)</small>
+        <input #fileInput type="file" accept=".jpg,.jpeg,.gif,.png,.txt" (change)="onFileSelected($event)" />
+      </label>
+
+      @if (file(); as selectedFile) {
+        <div class="selected-file">
+          <span class="file-icon">📎</span>
+          <span class="file-details">
+            <strong>{{ selectedFile.name }}</strong>
+            <small>{{ formatFileSize(selectedFile.size) }}</small>
+          </span>
+          <button type="button" class="remove-file" title="Remove file" (click)="clearFile()">×</button>
+        </div>
+      }
+
+      @if (fileError(); as e) { <small class="error">{{ e }}</small> }
+    </div>
+    @if (errorOf('content'); as e) { <small class="error content-error">{{ e }}</small> }
   </div>
 
   <div class="form-footer">
     <div class="captcha" formGroupName="captcha">
-      <img [src]="captchaImage()" alt="Captcha" />
+      <div class="captcha-image">
+        <span class="field-label">Captcha <span class="required-marker" aria-hidden="true">*</span></span>
+        <img [src]="captchaImage()" alt="Captcha" />
+      </div>
       <button type="button" class="refresh-button" (click)="loadCaptcha()" title="Refresh captcha">↻</button>
       <div class="captcha-field">
-        <span class="field-label">Captcha <span class="required-marker" aria-hidden="true">*</span></span>
         <input formControlName="userInput" [attr.maxlength]="captchaLength" placeholder="Enter code" autocomplete="off" />
         @if (errorOf('captcha.userInput'); as e) { <small class="error">{{ e }}</small> }
       </div>

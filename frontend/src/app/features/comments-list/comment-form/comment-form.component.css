@@ -46,9 +46,12 @@ input:not([type='file']):focus, textarea:focus {
 
 .editor {
   overflow: hidden;
+  padding: 0;
   border: 1px solid #d9dee8;
   border-radius: 6px;
 }
+
+.editor-field { min-width: 0; }
 
 .toolbar {
   display: flex;
@@ -155,18 +158,25 @@ textarea {
 }
 
 .captcha { display: flex; align-items: flex-start; gap: 5px; }
+.captcha-image { display: flex; flex-direction: column; align-items: flex-start; }
 .captcha img {
   width: 148px;
   height: 54px;
+  box-sizing: border-box;
   object-fit: contain;
   padding: 2px;
   border: 1px solid #cbd3e1;
   border-radius: 5px;
   background: #f7f8fb;
 }
-.captcha input { width: 86px; height: 34px !important; }
-.captcha-field { display: flex; flex-direction: column; align-items: flex-start; }
+.captcha input {
+  width: 148px;
+  height: 54px !important;
+  box-sizing: border-box;
+}
+.captcha-field { display: flex; flex-direction: column; align-items: flex-start; margin-top: 18px; }
 .refresh-button {
+  margin-top: 18px;
   padding: 2px 4px;
   border: 0;
   background: transparent;
@@ -191,6 +201,7 @@ textarea {
 .cancel-button:hover { background: #f5f7fa; }
 
 .error { display: block; margin-top: 3px; color: #c0392b; font-size: 11px; }
+.content-error { margin-left: 2px; }
 .general-error { margin: 0; }
 
 @media (max-width: 600px) {
