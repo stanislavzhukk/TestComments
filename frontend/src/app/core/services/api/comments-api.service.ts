@@ -5,6 +5,7 @@ import { CommentResponse } from '../../models/responses/comment-response';
 import { PagedResult } from '../../models/paged-result.model';
 import { GetPagedCommentsRequest } from '../../models/requests/get-paged-comments-request';
 import { CommentRequest } from '../../models/requests/comment-request';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -31,12 +32,12 @@ export class CommentsApiService {
     if (req.file){
       form.append('File', req.file, req.file.name);
     } 
-    return this.http.post<CommentResponse>('/api/Comments', form);
+    return this.http.post<CommentResponse>(`${environment.apiUrl}/api/Comments`, form);
   }
 
   get(request: GetPagedCommentsRequest): Observable<PagedResult<CommentResponse[]>> {
     const params = new HttpParams({ fromObject: request as Record<string, any> });
 
-    return this.http.get<PagedResult<CommentResponse[]>>("/api/comments", { params });
+    return this.http.get<PagedResult<CommentResponse[]>>(`${environment.apiUrl}/api/comments`, { params });
   }
 }
