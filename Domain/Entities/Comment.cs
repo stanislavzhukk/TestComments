@@ -16,7 +16,9 @@ namespace Domain.Entities
         public required string Content { get; set; }
         [MaxLength(CommentLimits.HomePageMax)]
         public string? HomePageUrl { get; set; }
+        [MaxLength(CommentLimits.AuthorIpMax)]
         public string? UserIp { get; set; }
+        [MaxLength(CommentLimits.AuthorUserAgentMax)]
         public string? UserAgent { get; set; }
         public required DateTime CreatedAt { get; set; }
         public ICollection<Attachment> Attachments { get; set; } = new List<Attachment>();
