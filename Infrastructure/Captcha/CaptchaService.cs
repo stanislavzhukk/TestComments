@@ -61,14 +61,16 @@ namespace Infrastructure.Services
 
             if (!cache.TryGetValue(key, out string? code))
             {
-                return Result.Failure(Error.Validation("Captcha.ValidationError", "CAPTCHA has expired or does not exist."));
+                return Result.Failure(Error.Validation("Captcha.ValidationError", "CAPTCHA has expired or does not exist.", 
+                    new Dictionary<string, string[]> { ["Captcha.UserInput"] = ["CAPTCHA has expired or does not exist."] }));
             }
 
             cache.Remove(key);
 
             return string.Equals(code, request.UserInput.Trim(), StringComparison.OrdinalIgnoreCase)
                 ? Result.Success()
-                : Result.Failure(Error.Validation("Captcha.ValidationError", "Invalid CAPTCHA."));
+                : Result.Failure(Error.Validation("Captcha.ValidationError", "Invalid or expired CAPTCHA.",
+                  new Dictionary<string, string[]>{ ["Captcha.UserInput"] = ["Invalid or expired CAPTCHA."] }));
         }
 
         private byte[] DrawCaptchaImage(string captchaText)
