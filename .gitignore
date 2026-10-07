@@ -369,3 +369,5 @@ FodyWeavers.xsd
 **/bin/
 **/obj/
 **/.env
+/frontend/.angular/cache/22.2.1/frontend
+/frontend/dist
