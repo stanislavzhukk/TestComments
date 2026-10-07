@@ -1,0 +1,18 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  color: #26334d;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:host ::ng-deep button,
+:host ::ng-deep input,
+:host ::ng-deep select,
+:host ::ng-deep textarea {
+  font-family: inherit;
+}
