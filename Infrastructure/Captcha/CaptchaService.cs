@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 using SkiaSharp;
 using System.Security.Cryptography;
 
-namespace Application.Services
+namespace Infrastructure.Services
 {
     public class CaptchaService(
         IMemoryCache cache,

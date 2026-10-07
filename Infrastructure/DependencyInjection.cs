@@ -1,5 +1,6 @@
 using Application.Interfaces;
 using Infrastructure.Persistence.Context;
+using Infrastructure.Services;
 using Infrastructure.Storage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -24,6 +25,8 @@ public static class DependencyInjection
 
         services.Configure<FileStorageOptions>(configuration.GetSection(FileStorageOptions.SectionName));
         services.AddSingleton<IFileStorageService, LocalFileStorage>();
+        services.AddScoped<ICaptchaService, CaptchaService>();
+        services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
 
         return services;
     }

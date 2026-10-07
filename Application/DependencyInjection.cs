@@ -27,8 +27,6 @@ public static class DependencyInjection
 
         // Register application services
         services.AddScoped<ICommentService, CommentService>();
-        services.AddSingleton<ICommentContentSanitizer, CommentContentSanitizer>();
-        services.AddScoped<ICaptchaService, CaptchaService>();
 
         return services;
     }
