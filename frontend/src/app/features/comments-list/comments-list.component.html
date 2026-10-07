@@ -1,16 +1,37 @@
 <div class="comments-container">
   <h2>Comments</h2>
 
-  <app-comment-form></app-comment-form>
+  <app-comment-form (created)="onCommentCreated()"></app-comment-form>
+
+  <div class="sort-panel" aria-label="Comment sorting">
+    <span class="sort-label">Sort comments</span>
+    <label>
+      <span>Field</span>
+      <select [value]="paginationRequest().sortBy" (change)="setSortField($event)">
+        <option value="createdAt">Date added</option>
+        <option value="userName">User name</option>
+        <option value="userEmail">E-mail</option>
+      </select>
+    </label>
+    <label>
+      <span>Direction</span>
+      <select [value]="paginationRequest().desc ? 'desc' : 'asc'" (change)="setSortDirection($event)">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+      </select>
+    </label>
+  </div>
 
   <div class="comments-list">
     @if (commentsList().length > 0) {
       @for (comment of commentsList(); track comment.id) {
-        <app-comment-item 
-          [comment]="comment" 
+        <app-comment-item
+          [comment]="comment"
           [depth]="0"
           [activeReplyId]="replyingToId()"
+          [repliesExpanded]="isRepliesExpanded(comment.id)"
           (replyTo)="handleReplyTo($event)"
+          (toggleReplies)="toggleReplies($event)"
           (created)="onCommentCreated()"
           (cancelled)="replyingToId.set(null)" />
       }

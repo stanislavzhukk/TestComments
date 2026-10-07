@@ -35,7 +35,7 @@ export class CommentFormComponent implements OnInit {
     content: ['', [Validators.required]],
     captcha: this.fb.group({
       captchaId: [''],
-      userInput: ['', [Validators.required]],
+      userInput: ['', [Validators.required, Validators.maxLength(5), Validators.minLength(5)]],
     }),
   });
 
@@ -103,18 +103,20 @@ export class CommentFormComponent implements OnInit {
     if (c.errors['email']) return 'Invalid email address';
     if (c.errors['pattern']) return 'Invalid value';
     if (c.errors['maxlength']) return 'Value is too long';
+    if (c.errors['minlength']) return 'Captcha must contain exactly 5 characters';
     return null;
   }
 
   private applyServerErrors(err: HttpErrorResponse) {
-    const errors = err.error?.errors as Record<string, string[]> | undefined;
+    const response = this.getErrorResponse(err);
+    const errors = response?.errors;
+    let hasFieldErrors = false;
 
-    if (err.status !== 400 || !errors) {
-      this.generalError.set('Failed to submit the comment');
-      return;
-    }
+    if (errors) {
+      for (const [key, messages] of Object.entries(errors)) {
+        const message = messages.find(Boolean);
+        if (!message) continue;
 
-    for (const [key, messages] of Object.entries(errors)) {
       const path = key
         .split('.')
         .map(p => p.charAt(0).toLowerCase() + p.slice(1))
@@ -122,12 +124,51 @@ export class CommentFormComponent implements OnInit {
 
       const control = this.form.get(path);
       if (control) {
-        control.setErrors({ server: messages[0] });
+        hasFieldErrors = true;
+        control.setErrors({ server: message });
         control.markAsTouched();
       } else {
-        this.generalError.set(messages[0]);
+        this.generalError.set(message);
+      }
       }
     }
+
+    const generalMessage = response?.detail || response?.title || err.message;
+    if (!hasFieldErrors || response?.detail || response?.title) {
+      this.generalError.set(generalMessage || 'Failed to submit the comment');
+    }
+  }
+
+  private getErrorResponse(err: HttpErrorResponse): {
+    title?: string;
+    detail?: string;
+    errors?: Record<string, string[]>;
+  } | null {
+    if (!err.error || typeof err.error !== 'object') return null;
+
+    const response = err.error as {
+      title?: unknown;
+      detail?: unknown;
+      errors?: unknown;
+    };
+
+    const errors: Record<string, string[]> = {};
+    if (response.errors && typeof response.errors === 'object') {
+      for (const [key, value] of Object.entries(response.errors as Record<string, unknown>)) {
+        if (Array.isArray(value)) {
+          const messages = value.filter((message): message is string => typeof message === 'string');
+          if (messages.length) errors[key] = messages;
+        } else if (typeof value === 'string') {
+          errors[key] = [value];
+        }
+      }
+    }
+
+    return {
+      title: typeof response.title === 'string' ? response.title : undefined,
+      detail: typeof response.detail === 'string' ? response.detail : undefined,
+      errors: Object.keys(errors).length ? errors : undefined,
+    };
   }
 
   wrapSelection(tag: 'i' | 'strong' | 'code' | 'a') {

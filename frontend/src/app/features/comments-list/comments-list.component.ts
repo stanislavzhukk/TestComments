@@ -4,7 +4,7 @@ import { CommentsApiService } from '../../core/services/api/comments-api.service
 import { GetPagedCommentsRequest } from '../../core/models/requests/get-paged-comments-request';
 import { CommentItemComponent } from './comment-item/comment-item.component';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { catchError, EMPTY, switchMap, timer } from 'rxjs';
+import { catchError, EMPTY, merge, Subject, switchMap, timer } from 'rxjs';
 import { CommentFormComponent } from './comment-form/comment-form.component';
 
 @Component({
@@ -17,6 +17,7 @@ export class CommentsListComponent implements OnInit {
   private readonly commentsApi = inject(CommentsApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly POLL_INTERVAL_MS = 5000;
+  private readonly refresh$ = new Subject<void>();
 
   commentsList = signal<CommentResponse[]>([]);
   hasNextPage = signal<boolean>(false);
@@ -32,12 +33,16 @@ export class CommentsListComponent implements OnInit {
   private readonly request$ = toObservable(this.paginationRequest);
 
   replyingToId = signal<string | null>(null);
+  expandedReplies = signal<Set<string>>(new Set());
 
   ngOnInit() {
     this.request$
       .pipe(
         switchMap(req =>
-          timer(0, this.POLL_INTERVAL_MS).pipe(
+          merge(
+            timer(0, this.POLL_INTERVAL_MS),
+            this.refresh$,
+          ).pipe(
             switchMap(() =>
               this.commentsApi.get(req).pipe(
                 catchError(err => {
@@ -62,11 +67,51 @@ export class CommentsListComponent implements OnInit {
     this.paginationRequest.update(cur => ({ ...cur, pageNumber: newPage }));
   }
 
+  changeSort(sortBy: string): void {
+    this.paginationRequest.update(cur => ({
+      ...cur,
+      pageNumber: 1,
+      sortBy,
+      desc: cur.sortBy === sortBy ? !cur.desc : true,
+    }));
+  }
+
+  setSortField(event: Event): void {
+    const sortBy = (event.target as HTMLSelectElement).value;
+    this.paginationRequest.update(cur => ({
+      ...cur,
+      pageNumber: 1,
+      sortBy,
+    }));
+  }
+
+  setSortDirection(event: Event): void {
+    const desc = (event.target as HTMLSelectElement).value === 'desc';
+    this.paginationRequest.update(cur => ({
+      ...cur,
+      pageNumber: 1,
+      desc,
+    }));
+  }
+
+  toggleReplies(commentId: string): void {
+    this.expandedReplies.update(expanded => {
+      const next = new Set(expanded);
+      next.has(commentId) ? next.delete(commentId) : next.add(commentId);
+      return next;
+    });
+  }
+
+  isRepliesExpanded(commentId: string): boolean {
+    return this.expandedReplies().has(commentId);
+  }
+
   handleReplyTo(comment: CommentResponse) {
     this.replyingToId.update(id => id === comment.id ? null : comment.id);
   }
 
   onCommentCreated() {
     this.replyingToId.set(null);
+    this.refresh$.next();
   }
 }

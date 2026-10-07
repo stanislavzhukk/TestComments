@@ -47,7 +47,7 @@
     <div class="captcha" formGroupName="captcha">
       <img [src]="captchaImage()" alt="Captcha" />
       <button type="button" class="refresh-button" (click)="loadCaptcha()" title="Refresh captcha">↻</button>
-      <input formControlName="userInput" placeholder="Enter code" />
+      <input formControlName="userInput" maxlength="5" placeholder="Enter code" />
       @if (errorOf('captcha.userInput'); as e) { <small class="error">{{ e }}</small> }
     </div>
 
