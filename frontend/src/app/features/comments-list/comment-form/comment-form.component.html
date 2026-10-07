@@ -1,0 +1,65 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="author-fields">
+    <label>
+      <span>Name</span>
+      <input formControlName="userName" placeholder="Your name" />
+      @if (errorOf('userName'); as e) { <small class="error">{{ e }}</small> }
+    </label>
+    <label>
+      <span>Email</span>
+      <input formControlName="userEmail" type="email" placeholder="you@example.com" />
+      @if (errorOf('userEmail'); as e) { <small class="error">{{ e }}</small> }
+    </label>
+    <label>
+      <span>Website</span>
+      <input formControlName="homePageUrl" placeholder="https://" />
+      @if (errorOf('homePageUrl'); as e) { <small class="error">{{ e }}</small> }
+    </label>
+  </div>
+
+  <div class="editor">
+    <div class="toolbar" role="toolbar" aria-label="Formatting">
+      <button type="button" title="Italic" (click)="wrapSelection('i')"><i>I</i></button>
+      <button type="button" title="Bold" (click)="wrapSelection('strong')"><strong>B</strong></button>
+      <button type="button" title="Code" (click)="wrapSelection('code')">&lt;/&gt;</button>
+      <button type="button" title="Link" (click)="wrapSelection('a')">↗</button>
+      <span class="toolbar-divider"></span>
+      <label class="file-button" title="Attach file">
+        <span>＋</span>
+        <input #fileInput type="file" (change)="onFileSelected($event)" />
+      </label>
+    </div>
+    <textarea #contentInput formControlName="content" rows="3" placeholder="Write your comment..."></textarea>
+    @if (file(); as selectedFile) {
+      <div class="selected-file">
+        <span class="file-icon">📎</span>
+        <span class="file-details">
+          <strong>{{ selectedFile.name }}</strong>
+          <small>{{ formatFileSize(selectedFile.size) }}</small>
+        </span>
+        <button type="button" class="remove-file" title="Remove file" (click)="clearFile()">×</button>
+      </div>
+    }
+    @if (errorOf('content'); as e) { <small class="error">{{ e }}</small> }
+  </div>
+
+  <div class="form-footer">
+    <div class="captcha" formGroupName="captcha">
+      <img [src]="captchaImage()" alt="Captcha" />
+      <button type="button" class="refresh-button" (click)="loadCaptcha()" title="Refresh captcha">↻</button>
+      <input formControlName="userInput" placeholder="Enter code" />
+      @if (errorOf('captcha.userInput'); as e) { <small class="error">{{ e }}</small> }
+    </div>
+
+    @if (generalError(); as e) { <p class="error general-error">{{ e }}</p> }
+
+    <div class="actions">
+      @if (parentId()) {
+        <button type="button" class="cancel-button" (click)="cancelled.emit()">Cancel</button>
+      }
+      <button type="submit" class="submit-button" [disabled]="isSubmitting()">
+        {{ parentId() ? 'Reply' : 'Send comment' }}
+      </button>
+    </div>
+  </div>
+</form>

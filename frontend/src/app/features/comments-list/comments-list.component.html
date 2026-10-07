@@ -1,0 +1,39 @@
+<div class="comments-container">
+  <h2>Comments</h2>
+
+  <app-comment-form></app-comment-form>
+
+  <div class="comments-list">
+    @if (commentsList().length > 0) {
+      @for (comment of commentsList(); track comment.id) {
+        <app-comment-item 
+          [comment]="comment" 
+          [depth]="0"
+          [activeReplyId]="replyingToId()"
+          (replyTo)="handleReplyTo($event)"
+          (created)="onCommentCreated()"
+          (cancelled)="replyingToId.set(null)" />
+      }
+    } @else {
+      <p class="no-comments">There are no comments</p>
+    }
+  </div>
+
+  <div class="pagination">
+    <button 
+      type="button" 
+      (click)="changePage(paginationRequest().pageNumber - 1)" 
+      [disabled]="!hasPrevPage()">
+      Previous
+    </button>
+    
+    <span>Page: {{ paginationRequest().pageNumber }}</span>
+    
+    <button 
+      type="button" 
+      (click)="changePage(paginationRequest().pageNumber + 1)"
+      [disabled]="!hasNextPage()">
+      Next
+    </button>
+  </div>
+</div>

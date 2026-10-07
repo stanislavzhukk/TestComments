@@ -1,0 +1,49 @@
+<article class="comment" [class.root]="depth() === 0">
+  <header class="comment-header" [class.nested]="depth() > 0">
+    <span class="avatar" [style.background]="avatarColor()">{{ initial() }}</span>
+    <div class="author-info">
+      <strong class="author">{{ comment().userName }}</strong>
+      <time class="date">{{ comment().createdAt | date: 'dd.MM.yy в HH:mm' }}</time>
+    </div>
+    <div class="comment-actions" aria-label="Comment actions">
+      <button type="button" class="icon-btn" title="Reply" (click)="replyTo.emit(comment())">↩</button>
+      <button type="button" class="icon-btn" title="Copy link">⌘</button>
+      <button type="button" class="icon-btn" title="More actions">⋮</button>
+    </div>
+  </header>
+
+  <div class="comment-body">
+    <div class="content" [innerHTML]="comment().content"></div>
+
+    @for (a of comment().attachments; track a.url) {
+      @if (a.type === "Image") {
+        <a class="attachment-image" [href]="a.url" data-lightbox="comments"><img [src]="a.url" [alt]="a.fileName" /></a>
+      } @else {
+        <a class="attachment-file" [href]="a.url" target="_blank" rel="noopener">{{ a.fileName }}</a>
+      }
+    }
+
+    <button type="button" class="reply-btn" (click)="replyTo.emit(comment())">Reply</button>
+  </div>
+
+  @if (activeReplyId() === comment().id) {
+    <app-comment-form
+      [parentId]="comment().id"
+      (created)="created.emit()"
+      (cancelled)="cancelled.emit()" />
+  }
+
+  @if (comment().replies && comment().replies.length) {
+    <div class="replies" [class.flat]="depth() >= maxIndentDepth">
+      @for (r of comment().replies; track r.id) {
+        <app-comment-item
+          [comment]="r"
+          [depth]="depth() + 1"
+          [activeReplyId]="activeReplyId()"
+          (replyTo)="replyTo.emit($event)"
+          (created)="created.emit()"
+          (cancelled)="cancelled.emit()" />
+      }
+    </div>
+  }
+</article>

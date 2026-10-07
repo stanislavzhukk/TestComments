@@ -1,0 +1,31 @@
+.comments-container {
+  max-width: 860px;
+  margin: 28px auto;
+  padding: 24px 28px 32px;
+  background: #fff;
+  border: 1px solid #e6e8ee;
+  border-radius: 8px;
+  box-shadow: 0 8px 30px rgba(39, 54, 88, .08);
+  color: #1d1d3b;
+}
+.comments-container h2 { margin: 0 0 20px; font-size: 20px; color: #23304b; }
+
+.no-comments { margin: 24px 0; text-align: center; color: #77778c; }
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  font-size: 14px;
+}
+.pagination button {
+  padding: 6px 14px;
+  border: 1px solid #cfd0e4;
+  border-radius: 4px;
+  background: #fff;
+  color: #4a56d8;
+  cursor: pointer;
+}
+.pagination button:disabled { opacity: .4; cursor: default; }
