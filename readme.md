@@ -6,8 +6,8 @@ The whole application is prepared to run with Docker Compose.
 
 ## Live demo
 
-- Frontend: <FRONTEND_URL>
-- API / Swagger: <API_URL>/swagger/index.html
+- Frontend: <https://testcomments.onrender.com>
+- API / Swagger: <https://testcomments.fly.dev/swagger>
 
 > The test stand uses free hosting, so the API and the frontend may be asleep
 > after a period of inactivity. On the first visit, allow 30-60 seconds for both
