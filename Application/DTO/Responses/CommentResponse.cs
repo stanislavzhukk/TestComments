@@ -7,10 +7,10 @@
         string? HomePageUrl,
         string Content,
         Guid? ParentId,
-        DateTime CreatedAt)
+        DateTime CreatedAt,
+        List<AttachmentResponse> Attachments)
     {
-        public List<CommentResponse> Replies { get; } = new();
-        public List<AttachmentResponse> Attachments { get; } = new();
+        public List<CommentResponse> Replies { get; private set; } = new();
         public int RepliesCount { get; private set; }
 
         public void SetRepliesCount(int count) => RepliesCount = count;

@@ -104,7 +104,12 @@ namespace Application.Services
                 comment.HomePageUrl,
                 comment.Content,
                 comment.ParentId,
-                comment.CreatedAt
+                comment.CreatedAt,
+                comment.Attachments.Select(a => new AttachmentResponse(
+                    a.Type,
+                    $"/uploads/{a.StoredFileName}",
+                    a.OriginalFileName))
+                .ToList()
             );
 
             if (attachment is not null)
@@ -128,13 +133,23 @@ namespace Application.Services
 
             var sortedQuery = ApplySorting(rootCommentsQuery, request.SortBy, request.Desc);
 
-            var rootComments = await sortedQuery
+            var responses = await sortedQuery
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Include(c => c.Attachments)
+                .Select(c => new CommentResponse(
+                    c.Id,
+                    c.UserName,
+                    c.UserEmail,
+                    c.HomePageUrl,
+                    c.Content,
+                    c.ParentId,
+                    c.CreatedAt,
+                    c.Attachments.Select(a => new AttachmentResponse(
+                        a.Type,
+                        $"/uploads/{a.StoredFileName}",
+                        a.OriginalFileName)).ToList())
+                )
                 .ToListAsync(ct);
-
-            var responses = rootComments.Select(c => MapToCommentResponse(c)).ToList();
 
             await AttachRepliesAsync(responses, ct);
 
@@ -146,15 +161,26 @@ namespace Application.Services
             var comment = await appDbContext.Comments.AsNoTracking()
                 .Include(c => c.Attachments)
                 .Where(c => c.Id == id)
+                .Select(c => new CommentResponse(
+                    c.Id,
+                    c.UserName,
+                    c.UserEmail,
+                    c.HomePageUrl,
+                    c.Content,
+                    c.ParentId,
+                    c.CreatedAt,
+                    c.Attachments.Select(a => new AttachmentResponse(
+                        a.Type,
+                        $"/uploads/{a.StoredFileName}",
+                        a.OriginalFileName)).ToList())
+                )
                 .FirstOrDefaultAsync(ct);
 
             if (comment is null)
             {
                 return Result.Failure<CommentResponse>(Error.NotFound("Comment.NotFound", "Comment not found"));
             }
-
-            var response = MapToCommentResponse(comment);
-            return Result.Success(response);
+            return Result.Success(comment);
         }
 
         private async Task AttachRepliesAsync(List<CommentResponse> roots, CancellationToken ct)
@@ -166,26 +192,35 @@ namespace Application.Services
 
             var rootIds = roots.Select(r => r.Id).ToList();
 
-            var replies = await appDbContext.Comments.AsNoTracking()
+            var repliesWithRoot = await appDbContext.Comments.AsNoTracking()
                 .Where(c => c.RootId != null && rootIds.Contains(c.RootId.Value))
                 .OrderBy(c => c.CreatedAt).ThenBy(c => c.Id)
-                .Include(c => c.Attachments)
-                .ToListAsync(ct);
+                .Select(c => new { 
+                    Response = new CommentResponse(
+                        c.Id,
+                        c.UserName,
+                        c.UserEmail,
+                        c.HomePageUrl,
+                        c.Content,
+                        c.ParentId,
+                        c.CreatedAt,
+                        c.Attachments.Select(a => new AttachmentResponse(
+                            a.Type,
+                            $"/uploads/{a.StoredFileName}",
+                            a.OriginalFileName)).ToList()
+                    ),
+                    RootId = c.RootId!.Value,
+                }).ToListAsync(ct);
 
-            var repliesResponses = replies.Select(c => MapToCommentResponse(c)).ToList();
+            var replies = repliesWithRoot.Select(r => r.Response).ToList();
+            var replyCounts = repliesWithRoot.GroupBy(r => r.RootId).ToDictionary(g => g.Key, g => g.Count());
 
-            Dictionary<Guid, CommentResponse> commentsById = roots.Concat(repliesResponses).ToDictionary(x => x.Id);
+            Dictionary<Guid, CommentResponse> commentsById = roots.Concat(replies).ToDictionary(x => x.Id);
 
-            foreach (var reply in repliesResponses)
+            foreach (var reply in replies)
             {
                 commentsById[reply.ParentId!.Value].Replies.Add(reply);
             }
-
-            var replyCounts = await appDbContext.Comments.AsNoTracking()
-                .Where(c => c.RootId != null && rootIds.Contains(c.RootId.Value))
-                .GroupBy(c => c.RootId!.Value)
-                .Select(group => new { RootId = group.Key, Count = group.Count() })
-                .ToDictionaryAsync(x => x.RootId, x => x.Count, ct);
 
             foreach (var root in roots)
             {
@@ -210,27 +245,6 @@ namespace Application.Services
         {
             var name = Path.GetFileName(fileName);
             return name.Length > 255 ? name[..255] : name;
-        }
-
-        private static CommentResponse MapToCommentResponse(Comment comment)
-        {
-            var response = new CommentResponse(
-                comment.Id,
-                comment.UserName,
-                comment.UserEmail,
-                comment.HomePageUrl,
-                comment.Content,
-                comment.ParentId,
-                comment.CreatedAt);
-
-            foreach (var attachment in comment.Attachments)
-            {
-                response.Attachments.Add(new AttachmentResponse(
-                    attachment.Type,
-                    $"/uploads/{attachment.StoredFileName}",
-                    attachment.OriginalFileName));
-            }
-            return response;
         }
     }
 }
