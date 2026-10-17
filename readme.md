@@ -6,8 +6,8 @@ The whole application is prepared to run with Docker Compose.
 
 ## Live demo
 
-- Frontend: <https://testcomments.onrender.com>
-- API / Swagger: <https://testcomments.fly.dev/swagger>
+- Frontend: <https://harpagonapp.site>
+- API / Swagger: <https://api.harpagonapp.site/swagger>
 
 > The test stand uses free hosting, so the API and the frontend may be asleep
 > after a period of inactivity. On the first visit, allow 30-60 seconds for both
